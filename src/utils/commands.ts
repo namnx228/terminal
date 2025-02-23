@@ -123,4 +123,39 @@ export const commands: Record<string, (args: string[]) => Promise<string> | stri
 
 Type 'help' to see list of available commands.
 `,
+  ai: async (args: string[]) => {
+    const prompt = args.join(' ');
+    if (!prompt) {
+      return "Usage: ai [your prompt]";
+    }
+    try {
+      const response = await fetch('/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: prompt })
+      });
+      const data = await response.json();
+      if (data.response) {
+        return data.response;
+      } else if (data.error) {
+        return "Error: " + data.error;
+      }
+      return "No response from server.";
+    } catch (e) {
+      return "Error sending prompt: " + e;
+    }
+  },
 };
+
+export async function executeCommand(input: string): Promise<string> {
+  const tokens = input.trim().split(/\s+/);
+  const commandKey = tokens[0].toLowerCase();
+  const args = tokens.slice(1);
+  if (commands.hasOwnProperty(commandKey)) {
+    return await commands[commandKey](args);
+  } else {
+    return await commands.ai([input]);
+  }
+}

@@ -35,7 +35,12 @@
       if (import.meta.env.VITE_TRACKING_ENABLED === 'true') {
         track(commandName, ...args);
       }
-
+      if (!commands.hasOwnProperty(commandName)) {
+        const output = await commands.ai([command]);
+        $history = [...$history, { command, outputs: [output] }];
+        command = '';
+        return;
+      }
       const commandFunction = commands[commandName];
 
       if (commandFunction) {
