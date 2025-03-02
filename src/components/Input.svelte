@@ -8,7 +8,46 @@
   let command = '';
   let historyIndex = -1;
 
-  let input: HTMLInputElement;
+  let input: HTMLTextAreaElement; // Existing declaration
+
+  // Add this function to handle auto-resizing
+  const autoResize = () => {
+    if (!input) return;
+    
+    // Set height based on the scrollHeight (content height)
+    input.style.height = `${input.scrollHeight}px`;
+  };
+  
+  // Add a reactive statement to call autoResize when command changes
+  $: if (input && command) {
+    // Use setTimeout to ensure DOM is updated
+    setTimeout(autoResize, 0);
+  }
+  
+  // Modify the existing afterUpdate function to also handle resizing
+  afterUpdate(() => {
+    input.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    autoResize();
+  });
+  
+  // Update handleKeyDown to reset height after clearing command
+  // const handleKeyDown = async (event: KeyboardEvent) => {
+  //   // Existing code...
+    
+  //   if (event.key === 'Enter') {
+  //     // Existing code...
+      
+  //     command = '';
+  //     // Reset height after clearing
+  //     setTimeout(() => {
+  //       if (input) {
+  //         input.style.height = 'auto'; // Ok, but redundant now. 
+  //         input.style.height = 'calc(1.5em)'; // Approximately one line height
+  //       }
+  //     }, 0);
+  //   }
+  // }
+    // Rest of existing code...
 
   onMount(() => {
     input.focus();
@@ -91,24 +130,25 @@
   };
 </script>
 
-<svelte:window
-  on:click={() => {
-    input.focus();
-  }}
-/>
+<svelte:window on:click={(event) => {
+  const selection = window.getSelection(); 
+  if (!selection || selection.toString().length === 0) 
+  {
+    input.focus(); 
+  }}} />
 
 <div class="flex w-full">
   <p class="visible md:hidden">❯</p>
 
-  <input
-    id="command-input"
-    name="command-input"
-    aria-label="Command input"
-    class="w-full px-2 bg-transparent outline-none"
-    type="text"
-    style={`color: ${$theme.foreground}`}
-    bind:value={command}
-    on:keydown={handleKeyDown}
-    bind:this={input}
-  />
+  <textarea
+  id="command-input"
+  name="command-input"
+  aria-label="Command input"
+  class="w-full px-2 bg-transparent outline-none resize-none overflow-hidden"
+  rows="1"
+  style={`color: ${$theme.foreground}`}
+  bind:value={command}
+  on:keydown={handleKeyDown}
+  bind:this={input}
+  ></textarea>
 </div>
