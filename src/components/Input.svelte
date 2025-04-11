@@ -30,26 +30,7 @@
     autoResize();
   });
   
-  // Update handleKeyDown to reset height after clearing command
-  // const handleKeyDown = async (event: KeyboardEvent) => {
-  //   // Existing code...
-    
-  //   if (event.key === 'Enter') {
-  //     // Existing code...
-      
-  //     command = '';
-  //     // Reset height after clearing
-  //     setTimeout(() => {
-  //       if (input) {
-  //         input.style.height = 'auto'; // Ok, but redundant now. 
-  //         input.style.height = 'calc(1.5em)'; // Approximately one line height
-  //       }
-  //     }, 0);
-  //   }
-  // }
-    // Rest of existing code...
-
-  onMount(() => {
+   onMount(() => {
     input.focus();
 
     if ($history.length === 0) {
