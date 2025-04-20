@@ -4,9 +4,13 @@
   import { theme } from '../stores/theme';
   import { commands } from '../utils/commands';
   import { track } from '../utils/tracking';
+  import { createEventDispatcher } from 'svelte';
 
   let command = '';
   let historyIndex = -1;
+  let isLoading = false; // Add loading state variable
+
+  const dispatch = createEventDispatcher(); // To notify parent (App.svelte) about loading state
 
   let input: HTMLTextAreaElement; // Existing declaration
 
@@ -30,7 +34,7 @@
     autoResize();
   });
   
-   onMount(() => {
+  onMount(() => {
     input.focus();
 
     if ($history.length === 0) {
@@ -50,16 +54,42 @@
 
   const handleKeyDown = async (event: KeyboardEvent) => {
     if (event.key === 'Enter') {
+      event.preventDefault();
       const [commandName, ...args] = command.split(' ');
 
       if (import.meta.env.VITE_TRACKING_ENABLED === 'true') {
         track(commandName, ...args);
       }
       if (!commands.hasOwnProperty(commandName)) {
-        const output = await commands.ai([command]);
-        $history = [...$history, { command, outputs: [output] }];
-        command = '';
-        return;
+        const previous_command = command;
+        command = ''; // Clear input immediately
+
+        // Define loading message and entry
+        const loadingMessage = '#########\nLoading Ai response...\n#########';
+        // Use previous_command, add type: '__LOADING__'
+        const loadingEntry = { command: previous_command, outputs: [loadingMessage], type: '__LOADING__' };
+
+        // Add temporary loading entry to history
+        $history = [...$history, loadingEntry];
+
+        // Set loading state to true and dispatch event
+        isLoading = true;
+        dispatch('loading', { status: isLoading });
+
+        // Fetch AI response
+        const output = await commands.ai([previous_command]);
+
+        // Remove temporary loading entry by checking type
+        $history = $history.filter(entry => entry.type !== '__LOADING__');
+
+        // Set loading state to false and dispatch event
+        isLoading = false;
+        dispatch('loading', { status: isLoading });
+
+        // Add final history entry (no type needed here)
+        $history = [...$history, { command: previous_command, outputs: [output] }];
+
+        return; // Exit after handling AI command
       }
       const commandFunction = commands[commandName];
 
@@ -75,7 +105,8 @@
         $history = [...$history, { command, outputs: [output] }];
       }
 
-      command = '';
+      command = "";
+
     } else if (event.key === 'ArrowUp') {
       if (historyIndex < $history.length - 1) {
         historyIndex++;
@@ -118,6 +149,8 @@
     input.focus(); 
   }}} />
 
+<!-- Conditionally render the input section  -->
+{#if !isLoading} 
 <div class="flex w-full">
   <p class="visible md:hidden">❯</p>
 
@@ -133,3 +166,5 @@
   bind:this={input}
   ></textarea>
 </div>
+<!-- End conditional rendering  -->
+{/if} 

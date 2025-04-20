@@ -3,6 +3,13 @@
   import Input from './components/Input.svelte';
   import History from './components/History.svelte';
   import { theme } from './stores/theme';
+
+  let isInputLoading = false; // State to track loading status from Input
+
+  // Handler for the 'loading' event from Input.svelte
+  const handleLoading = (event: CustomEvent<{ status: boolean }>) => {
+    isInputLoading = event.detail.status;
+  };
 </script>
 
 <svelte:head>
@@ -20,11 +27,15 @@
   class="h-full border-2 rounded-md p-4 overflow-auto text-xs sm:text-sm md:text-base"
   style={`background-color: ${$theme.background}; color: ${$theme.foreground}; border-color: ${$theme.green};`}
 >
-  <History />
+   <History />
 
+  <!-- Conditionally render the prompt and input section -->
+  {#if !isInputLoading} 
   <div class="flex flex-col md:flex-row">
     <Ps1 />
 
-    <Input />
+    <!-- Listen for the loading event -->
+    <Input on:loading={handleLoading} /> 
   </div>
+  {/if}
 </main>
